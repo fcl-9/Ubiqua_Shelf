@@ -1,10 +1,12 @@
 // config/database.js
 module.exports = {
     'connection': {
-        'host': 'localhost',
+        'host': '127.0.0.1',
         'user': 'root',
-        'password': 'password'
+        'password': ''
     },
-	'database': 'my_schema',
-    'users_table': 'users'
+	'database': 'house_db',
+    'users_table': 'user',
+    'device_table': 'device',
+    'product_stock_table': 'product_stock'
 };
