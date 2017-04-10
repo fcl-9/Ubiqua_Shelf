@@ -3,24 +3,35 @@
 <html>
 <head>
 	<title>Node Authentication</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"> <!-- load bootstrap css -->
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"> <!-- load fontawesome -->
+	<link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.css"> <!-- load bootstrap css -->
+	<link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css"> <!-- load fontawesome -->
 	<style>
-		body 		{ padding-top:80px; }
+        html{height: 100%; width: 100%;}
+        body{height: 100%;}
+        .container-fluid{height: 100%; padding:0; }
+        .message{ position:absolute; bottom: 15px; color:white;}
 	</style>
 </head>
 <body>
-    <div class="container">
-        <div class="col-sm-6 col-sm-offset-3">
-            <h1><span class="fa fa-sign-in"></span> Login</h1>
+    <div class="container-fluid">
+        <div class="col-md-6 col-sm-3 hidden-xs" style="background-color: #00b3ee; height:100%; border-left-color: #8c8c8c">
+            <div style="position:relative; height:100%">
+            <p class="message">Smart Shelf allows you to collaborate, experiment, and test much more effectivelly and efficiently</p>
+            </div>
+        </div>
 
-            <!-- show any messages that come back with authentication -->
+        <div class="col-md-6 col-sm-9 col-xs-12">
+            <div style="position:relative; height:100%; margin-top: calc(100% - 85%); width:90%; margin-left:auto; margin-right: auto;">
+            <h1 style="text-align: center;     margin-bottom: 10%;"></span>Sing-In to Control Your Shelf</h1>
+
+            <!-- show any messages that come back w  margin-bottom: 2cm;ith authentication -->
             <% if (message.length > 0) { %>
                 <div class="alert alert-danger"><%= message %></div>
             <% } %>
 
             <!-- LOGIN FORM -->
-            <form action="/login" method="post">
+
+            <form action="/login" method="post" style="margin-top: 40px;">
                 <div class="form-group">
                     <label>Username</label>
                     <input type="text" class="form-control" name="username">
@@ -29,18 +40,21 @@
                     <label>Password</label>
                     <input type="password" class="form-control" name="password">
                 </div>
-                <div class="form-group">
-                    <label>Remember Me</label>
-                    <input type="checkbox" class="form-control" name="remember" value="yes">
+                <div class="checkbox">
+                    <label><input type="checkbox" name="remember" value="yes"> Remember me</label>
+
                 </div>
 
-                <button type="submit" class="btn btn-warning btn-lg">Login</button>
+                <button type="submit" class="btn btn-warning ">Login</button>
             </form>
 
             <hr>
+            <div>
+                <p>Need an account? <a href="/signup">Sign-up</a></p>
+                <!--p>Or go <a href="/">home</a>.</p>-->
+            </div>
 
-            <p>Need an account? <a href="/signup">Signup</a></p>
-            <p>Or go <a href="/">home</a>.</p>
+            </div>
         </div>
     </div>
 </body>

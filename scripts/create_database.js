@@ -38,19 +38,19 @@ connection.query('\
     PRIMARY KEY (`id`)\
 )');
 connection.query('\
-    CREATE TABLE IF NOT EXISTS `house_db`.`device_has_user` (\
+    CREATE TABLE IF NOT EXISTS `house_db`.`device_has_users` (\
     `device_id` INT UNSIGNED NOT NULL,\
-    `user_id` INT UNSIGNED NOT NULL,\
-    PRIMARY KEY (`device_id`, `user_id`),\
-    INDEX `fk_device_has_user_user1_idx` (`user_id` ASC),\
-    CONSTRAINT `fk_device_has_user_device1`\
+    `users_id` INT UNSIGNED NOT NULL,\
+    PRIMARY KEY (`device_id`, `users_id`),\
+    INDEX `fk_device_has_users_users1_idx` (`users_id` ASC),\
+    CONSTRAINT `fk_device_has_users_device1`\
         FOREIGN KEY (`device_id`)\
         REFERENCES `house_db`.`device` (`id`)\
         ON DELETE NO ACTION\
         ON UPDATE NO ACTION,\
-    CONSTRAINT `fk_device_has_user_user1`\
-        FOREIGN KEY (`user_id`)\
-        REFERENCES `house_db`.`user` (`id`)\
+    CONSTRAINT `fk_device_has_users_users1`\
+        FOREIGN KEY (`users_id`)\
+        REFERENCES `house_db`.`users` (`id`)\
         ON DELETE NO ACTION\
         ON UPDATE NO ACTION)\
 ');
