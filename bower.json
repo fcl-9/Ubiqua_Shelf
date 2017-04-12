@@ -1,0 +1,22 @@
+{
+  "name": "node-authentication",
+  "description": "",
+  "main": "server.js",
+  "authors": [
+    "fcl-93 <fabiocl93@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/fcl-93/Ubiqua_Shelf",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "bootstrap": "^3.3.7",
+    "font-awesome": "^4.7.0"
+  }
+}
