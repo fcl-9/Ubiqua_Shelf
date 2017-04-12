@@ -122,14 +122,41 @@ module.exports = function(app, passport) {
     });
 
     app.post('/product',function(req,res){
-
-
-       /* connection.query("INSERT INTO `device_has_product_stock`(`stock`, `stocked_weight`, `expiration_date`, `state`, `previous_weight`, `product_stock_id`, `device_id`) VALUES ([value-1],[value-2],[value-3],[value-4],[value-5],[value-6],[value-7])", function(err,res){
-            if(err) throw err;
-
-            console.log('Last insert ID:', res.insertId);
-	    */
-
+        // TODO READ VARS FROM POST REQUEST
+        var product_id = req.body.device_name;
+        var device_id ="";
+        var state = 0;
+        var previous_weight = 0;
+        var stocked_weight = 0;
+        var stock = 0;
+        var expiration_date = Date.now();
+        connection.query("SELECT * FROM `device_has_product_stock` WHERE product_stock_id = ", function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if (rows.length === 0) {
+                connection.beginTransaction(function (err) {
+                    connection.query("INSERT INTO `device_has_product_stock`(`stock`, `stocked_weight`, `expiration_date`, `state`, `previous_weight`, `product_stock_id`, `device_id`) " +
+                        "VALUES ('" + stock + "','" + stocked_weight + "','" + expiration_date + "','" + state + "','" + previous_weight + "','" + product_id + "','" + device_id + "')", function (err, rows, fields) {
+                        if (err) {
+                            connection.rollback(function () {
+                                throw err;
+                            });
+                        }
+                        connection.commit(function (err) {
+                            if (err) {
+                                connection.rollback(function () {
+                                    throw err;
+                                });
+                            }
+                        });
+                        res.send('New Product Added');
+                    });
+                });
+            }
+            else {
+                res.send("No product was added. It already exists");
+            }
+        });
     });
 
     app.get('/product/:product_id/weight', function(req,res){
@@ -146,6 +173,26 @@ module.exports = function(app, passport) {
         });
 	});
 
+    app.post('/product/:product_id/weight', function(req,res){
+        //TODO VARS COME IN JSON NEED TO DEFINE A STRUCTURE FOR THEM.
+        var device_name = req.body.device_name;
+        var product_stock_id = req.params.product_id;
+        var stocked_weight = req.body.stocked_weight;
+
+        connection.query("SELECT * FROM `device_has_product_stock` WHERE `product_stock_id`="+product_stock_id+" and `device_id`="+device_name+"",function(err, rows, fields){
+            if (err) throw err;
+            for(i in rows){
+                connection.query("UPDATE `device_has_product_stock` SET `previous_weight`=`"+rows[i].stocked_weight+"` WHERE `product_stock_id`="+product_stock_id+" and `device_id`="+device_name+"",function(err, rows, fields) {
+                    if (err) throw err;
+                });
+                connection.query("UPDATE `device_has_product_stock` SET `stocked_weight`=`"+stocked_weight+"` WHERE `product_stock_id`="+product_stock_id+" and `device_id`="+device_name+"",function(err, rows, fields) {
+                    if (err) throw err;
+                    res.send('Update Weight');
+                });
+            }
+        });
+    });
+
     app.get('/product/:product_id/stock', function(req,res){
         connection.query("SELECT state FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
             if (err) throw err;
@@ -160,7 +207,9 @@ module.exports = function(app, passport) {
         });
     });
 
-    app.get('/product/:product_id/expiration_date',function(req,res){
+    app.post('/product/:product_id/stock')
+
+    /*app.get('/product/:product_id/expiration_date',function(req,res){
         connection.query("SELECT expiration_date FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
             if (err) throw err;
             console.log(rows.length);
@@ -172,10 +221,10 @@ module.exports = function(app, passport) {
                 res.send({'expiration_date':rows[i].expiration_date });
             }
         });
-    });
+    });*/
 
     app.get('/shopping_list', function(req,res){
-        connection.query("SELECT * FROM `device_has_product_stock` where stock='LOW'", function(err, rows, fields) {
+        connection.query("SELECT * FROM `device_has_product_stock` where state='TOBUY'", function(err, rows, fields) {
             if (err) throw err;
             console.log(rows.length);
             if(rows.length === 0){
@@ -213,11 +262,11 @@ module.exports = function(app, passport) {
                                 });
                             }
                         });
-                        res.send('ok');
+                        res.send('Device added '+ device_name);
                     });
                 });
             }else{
-                res.send('unable to add device');
+                res.send('The device already exists');
             }
 
         });
