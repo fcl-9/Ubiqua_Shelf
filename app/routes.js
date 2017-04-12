@@ -100,6 +100,7 @@ module.exports = function(app, passport) {
 		});
 	});
 
+    app.get('/product', function (req, res) {
 
 
     app.get('/product', function(req,res){
@@ -235,6 +236,26 @@ module.exports = function(app, passport) {
             } else {
                 for (var i in rows) {
                     var query = "UPDATE device_has_product_stock SET state = 'TOBUY' WHERE  product_stock_id ='" + rows[i].id + "'";
+                    console.log(query);
+                    connection.query(query, function (err, lines, fields) {
+                        res.send("updated");
+                    });
+                }
+            }
+        });
+    });
+
+    app.delete('/shopping_list', function (req, res) {
+        var product_name = req.body.product_name;
+        console.log(product_name);
+        var sql = "SELECT id FROM product_stock WHERE product_stock.product_name ='" + product_name + "'";
+        connection.query(sql, function (err, rows, fields) {
+            if (err) throw err;
+            if (rows.length === 0) {
+                res.send('unable to add product to shopping list (invalid product name)');
+            } else {
+                for (var i in rows) {
+                    var query = "UPDATE device_has_product_stock SET state = 'DISABLE' WHERE  product_stock_id ='" + rows[i].id + "'";
                     console.log(query);
                     connection.query(query, function (err, lines, fields) {
                         res.send("updated");
