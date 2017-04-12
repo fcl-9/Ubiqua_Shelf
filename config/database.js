@@ -6,7 +6,7 @@ module.exports = {
         'password': ''
     },
 	'database': 'house_db',
-    'users_table': 'users',
+    'users_table': 'user',
     'device_table': 'device',
     'product_stock_table': 'product_stock'
 };
