@@ -76,7 +76,6 @@ module.exports = function(app, passport) {
 		res.redirect('/');
 	});
 
-
 	app.get('/stock',isLoggedIn, function(req,res){
 		res.render('stock.ejs',{
 			user: req.user
@@ -101,11 +100,7 @@ module.exports = function(app, passport) {
 		});
 	});
 
-	app.get('/shopping_list',isLoggedIn, function(req,res){
-		res.render('shopping_list.ejs',{
-			user: req.user
-		});
-	});
+
 
     app.get('/product', function(req,res){
         connection.query("SELECT * FROM `device_has_product_stock` ", function(err, rows, fields) {
@@ -207,9 +202,7 @@ module.exports = function(app, passport) {
         });
     });
 
-    app.post('/product/:product_id/stock')
-
-    /*app.get('/product/:product_id/expiration_date',function(req,res){
+    app.get('/product/:product_id/expiration_date',function(req,res){
         connection.query("SELECT expiration_date FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
             if (err) throw err;
             console.log(rows.length);
@@ -221,17 +214,32 @@ module.exports = function(app, passport) {
                 res.send({'expiration_date':rows[i].expiration_date });
             }
         });
-    });*/
+    });
 
     app.get('/shopping_list', function(req,res){
-        connection.query("SELECT * FROM `device_has_product_stock` where state='TOBUY'", function(err, rows, fields) {
+        var sql = "SELECT product_stock.product_name, device_has_product_stock.stock FROM device_has_product_stock " +
+            "JOIN product_stock ON product_stock.id = device_has_product_stock.product_stock_id WHERE state='TOBUY'";
+        connection.query(sql, function (err, rows, fields) {
+            res.send({'shopping_list': JSON.stringify(rows)});
+        });
+    });
+
+    app.post('/shopping_list', function (req, res) {
+        var product_name = req.body.product_name;
+        console.log(product_name);
+        var sql = "SELECT id FROM product_stock WHERE product_stock.product_name ='" + product_name + "'";
+        connection.query(sql, function (err, rows, fields) {
             if (err) throw err;
-            console.log(rows.length);
-            if(rows.length === 0){
-                res.send({'c':'Non'});
-            }
-            for (var i in rows) {
-                res.send({'expiration_date':rows[i].expiration_date });
+            if (rows.length === 0) {
+                res.send('unable to add product to shopping list (invalid product name)');
+            } else {
+                for (var i in rows) {
+                    var query = "UPDATE device_has_product_stock SET state = 'TOBUY' WHERE  product_stock_id ='" + rows[i].id + "'";
+                    console.log(query);
+                    connection.query(query, function (err, lines, fields) {
+                        res.send("updated");
+                    });
+                }
             }
         });
     });
@@ -268,10 +276,7 @@ module.exports = function(app, passport) {
             }else{
                 res.send('The device already exists');
             }
-
         });
-
-
     });
 };
 
