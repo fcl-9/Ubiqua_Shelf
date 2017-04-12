@@ -3,38 +3,81 @@
 <html>
 <head>
 	<title>Node Authentication</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+	<link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.css"> <!-- load bootstrap css -->
+	<link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css"> <!-- load fontawesome -->
 	<style>
-		body 		{ padding-top:80px; word-wrap:break-word; }
+		html{height: 100%; width: 100%;}
+		body{height: 100%;}
+		.navbar{ border-radius: 0; background-color: #ec971f; color:white;border-color: #eea236; margin-bottom: 0;}
+		.white, .white a {
+			color: #fff;
+		}
+		.navbar-toggle{ border-color: white;}
+		.navbar-right a { padding-top: 15px; background-color: #ec971f; border-color: #ec971f;}
+		.btn :active:hover {border-color: #ec971f; }
+		.btn-lg{
+			width:100%;
+		}
+		.btn{
+		border:0px solid transparent;}
+		.image{
+			position: relative;
+			width:100%
+		}
+		.image-caption{
+			position: absolute;
+			top: 40px;
+			left: 20px;
+		}
+
+
 	</style>
 </head>
 <body>
-<div class="container">
-
-	<div class="page-header text-center">
-		<h1><span class="fa fa-anchor"></span> Profile Page</h1>
-		<a href="/logout" class="btn btn-default btn-sm">Logout</a>
-	</div>
-
-	<div class="row">
-
-		<!-- LOCAL INFORMATION -->
-		<div class="col-sm-6">
-			<div class="well">
-				<h3><span class="fa fa-user"></span> Local</h3>
-
-					<p>
-						<strong>id</strong>: <%= user.id %><br>
-						<strong>username</strong>: <%= user.username %><br>
-						<strong>password</strong>: <%= user.password %>
-					</p>
-
-			</div>
+	<% include ../partials/nav-bar.ejs %>
+	<img class="image" src="17902649_1612740275406723_2073634961_o.jpg"/>
+	<h2 class="image-caption"> Command your pantry from everywhere.</h2>
+	<div class="container">
+<hr>
+			<div class="row">
+				<div class="col-md-1 text-center">
+				</div>
+				<div class="col-sm-2 text-center">
+					<a href="/shopping_list" class="btn btn-lg btn-default">
+						<img src="tobuy.png"/><br/>
+						To-buy <br>
+					</a></div>
+				<div class="col-sm-2 text-center">
+					<a href="/recipe" class="btn btn-lg btn-default">
+						<img src="recipes.png"/><br/>
+						Recipes <br>
+					</a>
+				</div>
+				<div class="col-sm-2 text-center">
+					<a href="/stock" class="btn btn-lg btn-default">
+						<img src="shelf.png"/><br/>
+						 Stock <br>
+					</a>
+				</div>
+				<div class="col-sm-2 text-center">
+					<a href="/sensor" class="btn btn-lg btn-default">
+						<img src="sensors.png"/><br/>
+						Sensors <br>
+					</a>
+				</div>
+				<div class="col-sm-2 text-center">
+					<a href="/settings" class="btn btn-lg btn-default">
+						<img src="settings.png"/><br/>
+						Settings <br>
+					</a>
+				</div>
+				<div class="col-md-1 text-center">
+				</div>
 		</div>
 
 	</div>
-
+</body>
 </div>
+
 </body>
 </html>

@@ -30,6 +30,7 @@ app.use(bodyParser.json());
 
 app.set('view engine', 'ejs'); // set up ejs for templating
 app.use('/bower_components',express.static(__dirname+'/bower_components'));
+app.use( express.static( "public" ) );
 // required for passport
 app.use(session({
 	secret: 'vidyapathaisalwaysrunning',

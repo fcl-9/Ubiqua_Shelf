@@ -1,27 +1,33 @@
 // app/routes.js
+var mysql = require('mysql');
+var bcrypt = require('bcrypt-nodejs');
+var dbconfig = require('../config/database.js');
+var connection = mysql.createConnection(dbconfig.connection);
+connection.query('USE ' + dbconfig.database);
+
 module.exports = function(app, passport) {
 
 	// =====================================
 	// HOME PAGE (with login links) ========
 	// =====================================
-	app.get('/', function(req, res) {
-		res.render('index.ejs'); // load the index.ejs file
-	});
+	//app.get('/', function(req, res) {
+	//	res.render('index.ejs'); // load the index.ejs file
+	//});
 
 	// =====================================
 	// LOGIN ===============================
 	// =====================================
 	// show the login form
-	app.get('/login', function(req, res) {
+	app.get('/', function(req, res) {
 
 		// render the page and pass in any flash data if it exists
 		res.render('login.ejs', { message: req.flash('loginMessage') });
 	});
 
 	// process the login form
-	app.post('/login', passport.authenticate('local-login', {
+	app.post('/', passport.authenticate('local-login', {
             successRedirect : '/profile', // redirect to the secure profile section
-            failureRedirect : '/login', // redirect back to the signup page if there is an error
+            failureRedirect : '/', // redirect back to the signup page if there is an error
             failureFlash : true // allow flash messages
 		}),
         function(req, res) {
@@ -69,15 +75,164 @@ module.exports = function(app, passport) {
 		req.logout();
 		res.redirect('/');
 	});
+
+
+	app.get('/stock',isLoggedIn, function(req,res){
+		res.render('stock.ejs',{
+			user: req.user
+		});
+	});
+
+	app.get('/recipe',isLoggedIn, function(req,res){
+		res.render('recipe.ejs',{
+			user: req.user
+		});
+	});
+
+	app.get('/settings',isLoggedIn, function(req,res){
+		res.render('settings.ejs',{
+			user: req.user
+		});
+	});
+
+	app.get('/sensor',isLoggedIn, function(req,res){
+		res.render('sensor.ejs',{
+			user: req.user
+		});
+	});
+
+	app.get('/shopping_list',isLoggedIn, function(req,res){
+		res.render('shopping_list.ejs',{
+			user: req.user
+		});
+	});
+
+    app.get('/product', function(req,res){
+        connection.query("SELECT * FROM `device_has_product_stock` ", function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+
+                res.send({'products':'error'});
+            }
+            for (var i in rows) {
+                res.send({'products':JSON.stringify(rows) });
+            }
+        });
+    });
+
+    app.post('/product',function(req,res){
+
+
+       /* connection.query("INSERT INTO `device_has_product_stock`(`stock`, `stocked_weight`, `expiration_date`, `state`, `previous_weight`, `product_stock_id`, `device_id`) VALUES ([value-1],[value-2],[value-3],[value-4],[value-5],[value-6],[value-7])", function(err,res){
+            if(err) throw err;
+
+            console.log('Last insert ID:', res.insertId);
+	    */
+
+    });
+
+    app.get('/product/:product_id/weight', function(req,res){
+        connection.query("SELECT stocked_weight FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+
+				res.send({'stocked_weight':'error'});
+			}
+            for (var i in rows) {
+                res.send({'stocked_weight':rows[i].stocked_weight });
+            }
+        });
+	});
+
+    app.get('/product/:product_id/stock', function(req,res){
+        connection.query("SELECT state FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+
+                res.send({'state':'error'});
+            }
+            for (var i in rows) {
+                res.send({'state':rows[i].state });
+            }
+        });
+    });
+
+    app.get('/product/:product_id/expiration_date',function(req,res){
+        connection.query("SELECT expiration_date FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+
+                res.send({'expiration_date':'error'});
+            }
+            for (var i in rows) {
+                res.send({'expiration_date':rows[i].expiration_date });
+            }
+        });
+    });
+
+    app.get('/shopping_list', function(req,res){
+        connection.query("SELECT * FROM `device_has_product_stock` where stock='LOW'", function(err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+                res.send({'c':'Non'});
+            }
+            for (var i in rows) {
+                res.send({'expiration_date':rows[i].expiration_date });
+            }
+        });
+    });
+
+    app.get('/device', function(req,res){
+    });
+
+    app.post('/device',function(req,res) {
+        var device_name = req.body.device_name;
+        console.log(Date.now());
+        console.log(device_name);
+        var formatedMysqlString = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
+        connection.query('SELECT `id`, `device_name`, `updated_on` FROM `device` WHERE device_name="'+device_name+'"', function (err, rows, fields) {
+            if (err) throw err;
+            console.log(rows.length);
+            if(rows.length === 0){
+                connection.beginTransaction(function(err) {
+                    connection.query('INSERT INTO `device`(`device_name`, `updated_on`) VALUES ("' + device_name + '","' + formatedMysqlString + '")', function (err, rows, fields) {
+                        if (err) {
+                            connection.rollback(function() {
+                                throw err;
+                            });
+                        }
+                        connection.commit(function(err) {
+                            if (err) {
+                                connection.rollback(function () {
+                                    throw err;
+                                });
+                            }
+                        });
+                        res.send('ok');
+                    });
+                });
+            }else{
+                res.send('unable to add device');
+            }
+
+        });
+
+
+    });
 };
 
 // route middleware to make sure
 function isLoggedIn(req, res, next) {
 
-	// if user is authenticated in the session, carry on
-	if (req.isAuthenticated())
-		return next();
+    // if user is authenticated in the session, carry on
+    if (req.isAuthenticated())
+        return next();
 
-	// if they aren't redirect them to the home page
-	res.redirect('/');
+    // if they aren't redirect them to the home page
+    res.redirect('/');
 }
