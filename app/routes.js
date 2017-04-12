@@ -127,15 +127,74 @@ module.exports = function(app, passport) {
 	});
 
     app.get('/product_item', function(req,res){
+
     });
 
     app.post('/product_item',function(req,res){
+        var product_id = req.body.product_id;
+        var device_id = req.body.device_id;
+
+        var expiration_date;        //TODO: No idea were to get -> No Idea ??? Oo
+        var actual_weight;          //TODO: No idea were to get -> Deve vir do Pi
+        var previous_weight = 0;    //TODO: No idea were to get -> Se o produto é novo não havia stock antes
+
+        var updated_on = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
+        connection.query("SELECT * FROM `product_item` WHERE `product_id`='"+ product_id +"', and  `device_id`= '"+ device_id +"'",function(err0, rows0, fields0){
+            if (err) throw err;
+            if(rows0.length === 0){
+                connection.beginTransaction(function (err) {
+                    connection.query("INSERT INTO `product_item`(`id`, `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
+                        "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on + "')", function (err1, rows1, filter1) {
+                        if (err) {
+                            connection.rollback(function () {
+                                throw err;
+                            });
+                            res.json({'state':'error', 'message': err});
+                        }
+                        connection.commit(function (err) {
+                            if (err) {
+                                connection.rollback(function () {
+                                    throw err;
+                                });
+                            }
+                            res.json({'state':'success'});
+                        });
+                    });
+                });
+            }else{
+                res.json({'state':'error','message':'already exists'});
+            }
+        });
     });
 
     app.get('/product/:product_id/weight', function(req,res){
-	});
+        var product_id = req.params.product_id;
+        var device_id = req.body.device_id;
+        var current_weight = -1;
+	    connection.query("SELECT  `actual_weight`, `previous_weight` FROM `product_item` WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function (err,row,field) {
+            for(var i in row){
+                current_weight = row[i].actual_weight;
+            }
+
+            req.json({'success':'success', 'data':current_weight });
+        });
+    });
 
     app.post('/product/:product_id/weight', function(req,res){
+        var product_id = req.params.product_id;
+        var device_id = req.body.device_id;
+        var current_weight = -1;
+        var previous_weight = -1;
+        connection.query("SELECT  `actual_weight`, `previous_weight` FROM `product_item` WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function (err,row,field) {
+            for(var i in row){
+                previous_weight = row[i].actual_weight;
+            }
+            connection.query("UPDATE `product_item` SET `actual_weight`='"+ current_weight +"',`previous_weight`='"+ previous_weight +"'" +
+                "WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function(err,row,field){
+
+                req.json({'success':'success'});
+            });
+        });
     });
 
     /*app.get('/product/:product_id/stock', function(req,res){
