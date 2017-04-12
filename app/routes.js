@@ -100,11 +100,11 @@ module.exports = function(app, passport) {
 		});
 	});
 
-	app.get('/shopping_list',isLoggedIn, function(req,res){
+    /*app.get('/shopping_list',isLoggedIn, function(req,res){
 		res.render('shopping_list.ejs',{
 			user: req.user
 		});
-	});
+     }); */
 
     app.get('/product', function(req,res){
         connection.query("SELECT * FROM `device_has_product_stock` ", function(err, rows, fields) {
@@ -174,32 +174,31 @@ module.exports = function(app, passport) {
     });
 
     app.get('/shopping_list', function(req,res){
-        connection.query("SELECT * FROM `device_has_product_stock` where stock='TOBUY'", function (err, rows, fields) {
-            if (err) throw err;
-            console.log(rows.length);
-            if(rows.length === 0){
-                res.send({'c':'Non'});
-            }
-
-            var shopping_list = [];
-            for (var i in rows) {
-                connection.query("SELECT * FROM `product_stock`" +
-                    "where product_stock.product_id = '" + rows[i].product_stock_id + "'", function (err, line, fields) {
-                    if (err) throw err;
-                    console.log(line.length);
-                    if (line.length === 0) {
-                        res.send({'c': 'Non'});
-                    }
-                    shopping_list.push({'product_name': line.product_name, 'stock': rows[i].stock});
-                });
-            }
-            res.send({'shopping_list': JSON.stringify(shopping_list)});
+        var sql = "SELECT product_stock.product_name, device_has_product_stock.stock FROM device_has_product_stock " +
+            "JOIN product_stock ON product_stock.id = device_has_product_stock.product_stock_id WHERE state='TOBUY'";
+        connection.query(sql, function (err, rows, fields) {
+            res.send({'shopping_list': JSON.stringify(rows)});
         });
     });
 
-    app.post('/spopping_list', function (req, res) {
-        var product = req.body.product_name;
-
+    app.post('/shopping_list', function (req, res) {
+        var product_name = req.body.product_name;
+        console.log(product_name);
+        var sql = "SELECT id FROM product_stock WHERE product_stock.product_name ='" + product_name + "'";
+        connection.query(sql, function (err, rows, fields) {
+            if (err) throw err;
+            if (rows.length === 0) {
+                res.send('unable to add product to shopping list (invalid product name)');
+            } else {
+                for (var i in rows) {
+                    var query = "UPDATE device_has_product_stock SET state = 'TOBUY' WHERE  product_stock_id ='" + rows[i].id + "'";
+                    console.log(query);
+                    connection.query(query, function (err, lines, fields) {
+                        res.send("updated");
+                    });
+                }
+            }
+        });
     });
 
     app.get('/device', function(req,res){
