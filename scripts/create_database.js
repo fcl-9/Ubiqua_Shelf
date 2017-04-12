@@ -57,10 +57,10 @@ connection.query('\
 
 connection.query('\
     CREATE TABLE IF NOT EXISTS `house_db`.`device_has_product_stock` (\
-      `stock` INT NOT NULL,\
+    `stock` INT NOT NULL,\
     `stocked_weight` FLOAT NOT NULL,\
     `expiration_date` DATE NOT NULL,\
-    `state` TINYINT NOT NULL,\
+    `state` ENUM("DISABLE", "TOBUY", "ONSTOCK") NOT NULL,\
     `previous_weight` FLOAT NOT NULL,\
     `product_stock_id` INT UNSIGNED NOT NULL,\
     `device_id` INT UNSIGNED NOT NULL,\
