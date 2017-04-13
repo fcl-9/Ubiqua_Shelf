@@ -9,18 +9,16 @@ var connection = mysql.createConnection(dbconfig.connection);
 
 connection.query('CREATE DATABASE ' + dbconfig.database);
 
-connection.query('\
- CREATE TABLE IF NOT EXISTS `house_db`.`device` (\
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`device` (\
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
     `device_name` VARCHAR(45) NOT NULL,\
     `updated_on` DATETIME NOT NULL,\
     PRIMARY KEY (`id`),\
     UNIQUE INDEX `id_UNIQUE` (`id` ASC))\
-');
+    ');
 
 
-connection.query('\
-    CREATE TABLE IF NOT EXISTS `house_db`.`users` (\
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`users` (\
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
     `username` VARCHAR(45) NOT NULL,\
     `password` CHAR(60) NOT NULL,\
@@ -29,10 +27,9 @@ connection.query('\
     `updated_on` DATETIME NOT NULL,\
     PRIMARY KEY (`id`),\
     UNIQUE INDEX `id_UNIQUE` (`id` ASC))\
-');
+    ');
 
-connection.query('\
-    CREATE TABLE IF NOT EXISTS `house_db`.`product` (\
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`product` (\
     `id` INT UNSIGNED NOT NULL,\
     `name` VARCHAR(255) NOT NULL,\
     `default_weight` FLOAT NOT NULL,\
@@ -41,36 +38,49 @@ connection.query('\
     `description` VARCHAR(255) NOT NULL,\
     PRIMARY KEY (`id`),\
     UNIQUE INDEX `id_UNIQUE` (`id` ASC))\
- ');
+    ');
 
-connection.query('\
-    CREATE TABLE IF NOT EXISTS `house_db`.`product_item` (\
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
-    `actual_weight` FLOAT NOT NULL,\
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`lot` (\
+    `id` INT UNSIGNED NOT NULL,\
     `expiration_date` DATE NOT NULL,\
+    `product_id` INT UNSIGNED NOT NULL,\
+    PRIMARY KEY (`id`, `product_id`),\
+    UNIQUE INDEX `id_UNIQUE` (`id` ASC),\
+    INDEX `fk_Lote_product1_idx` (`product_id` ASC),\
+    CONSTRAINT `fk_Lote_product1`\
+        FOREIGN KEY (`product_id`)\
+        REFERENCES `house_db`.`product` (`id`)\
+        ON DELETE NO ACTION\
+        ON UPDATE NO ACTION)\
+    ');
+
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`product_item` (\
+    `id` INT UNSIGNED NOT NULL,\
+    `actual_weight` FLOAT NOT NULL,\
     `previous_weight` FLOAT NOT NULL,\
     `updated_on` DATETIME NOT NULL,\
+    `state` ENUM("IN", "OUT") NOT NULL,\
+    `distance` DOUBLE NOT NULL,\
     `device_id` INT UNSIGNED NOT NULL,\
-    `product_id` INT UNSIGNED NOT NULL,\
+    `lot_id` INT UNSIGNED NOT NULL,\
+    `lot_product_id` INT UNSIGNED NOT NULL,\
     PRIMARY KEY (`id`),\
     UNIQUE INDEX `id_UNIQUE` (`id` ASC),\
     INDEX `fk_product_item_device1_idx` (`device_id` ASC),\
-    INDEX `fk_product_item_product1_idx` (`product_id` ASC),\
+    INDEX `fk_product_item_lot1_idx` (`lot_id` ASC, `lot_product_id` ASC),\
     CONSTRAINT `fk_product_item_device1`\
         FOREIGN KEY (`device_id`)\
         REFERENCES `house_db`.`device` (`id`)\
         ON DELETE NO ACTION\
         ON UPDATE NO ACTION,\
-    CONSTRAINT `fk_product_item_product1`\
-        FOREIGN KEY (`product_id`)\
-        REFERENCES `house_db`.`product` (`id`)\
+    CONSTRAINT `fk_product_item_lot1`\
+        FOREIGN KEY (`lot_id` , `lot_product_id`)\
+        REFERENCES `house_db`.`lot` (`id` , `product_id`)\
         ON DELETE NO ACTION\
         ON UPDATE NO ACTION)\
-');
+    ');
 
-
-connection.query('\
-    CREATE TABLE IF NOT EXISTS `house_db`.`device_has_users` (\
+connection.query('CREATE TABLE IF NOT EXISTS `house_db`.`device_has_users` (\
     `device_id` INT UNSIGNED NOT NULL,\
     `users_id` INT UNSIGNED NOT NULL,\
     PRIMARY KEY (`device_id`, `users_id`),\
@@ -86,7 +96,8 @@ connection.query('\
         REFERENCES `house_db`.`users` (`id`)\
         ON DELETE NO ACTION\
         ON UPDATE NO ACTION)\
-');
+    ');
+
 console.log('Success: Database Created!');
 
 connection.end();
