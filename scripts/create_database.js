@@ -60,27 +60,29 @@ connection.query('\
 
 connection.query('\
     CREATE TABLE IF NOT EXISTS `house_db`.`product_item` (\
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
-    `actual_weight` FLOAT NOT NULL,\
-    `previous_weight` FLOAT NOT NULL,\
-    `updated_on` DATETIME NOT NULL,\
-    `device_id` INT UNSIGNED NOT NULL,\
-    `lot_id` INT UNSIGNED NOT NULL,\
-    `lot_product_id` INT UNSIGNED NOT NULL,\
-    PRIMARY KEY (`id`),\
-    UNIQUE INDEX `id_UNIQUE` (`id` ASC),\
-    INDEX `fk_product_item_device1_idx` (`device_id` ASC),\
-    INDEX `fk_product_item_lot1_idx` (`lot_id` ASC, `lot_product_id` ASC),\
-    CONSTRAINT `fk_product_item_device1`\
-        FOREIGN KEY (`device_id`)\
-        REFERENCES `house_db`.`device` (`id`)\
-        ON DELETE NO ACTION\
-        ON UPDATE NO ACTION,\
-    CONSTRAINT `fk_product_item_lot1`\
-        FOREIGN KEY (`lot_id` , `lot_product_id`)\
-        REFERENCES `house_db`.`lot` (`id` , `product_id`)\
-        ON DELETE NO ACTION\
-        ON UPDATE NO ACTION)\
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
+        `actual_weight` FLOAT NOT NULL,\
+        `previous_weight` FLOAT NOT NULL,\
+        `updated_on` DATETIME NOT NULL,\
+        `state` ENUM("IN", "OUT") NOT NULL,\
+        `distance` DOUBLE NOT NULL,\
+        `device_id` INT UNSIGNED NOT NULL,\
+        `lot_id` INT UNSIGNED NOT NULL,\
+        `lot_product_id` INT UNSIGNED NOT NULL,\
+        PRIMARY KEY (`id`),\
+        UNIQUE INDEX `id_UNIQUE` (`id` ASC),\
+        INDEX `fk_product_item_device1_idx` (`device_id` ASC),\
+        INDEX `fk_product_item_lot1_idx` (`lot_id` ASC, `lot_product_id` ASC),\
+        CONSTRAINT `fk_product_item_device1`\
+            FOREIGN KEY (`device_id`)\
+            REFERENCES `house_db`.`device` (`id`)\
+            ON DELETE NO ACTION\
+            ON UPDATE NO ACTION,\
+        CONSTRAINT `fk_product_item_lot1`\
+            FOREIGN KEY (`lot_id` , `lot_product_id`)\
+            REFERENCES `house_db`.`lot` (`id` , `product_id`)\
+            ON DELETE NO ACTION\
+            ON UPDATE NO ACTION)\
     ');
 
 connection.query('\
