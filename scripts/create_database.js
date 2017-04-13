@@ -23,7 +23,7 @@ connection.query('\
     CREATE TABLE IF NOT EXISTS `house_db`.`users` (\
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\
     `username` VARCHAR(45) NOT NULL,\
-    `password` VARCHAR(45) NOT NULL,\
+    `password` CHAR(60) NOT NULL,\
     `name` VARCHAR(45) NOT NULL,\
     `email` VARCHAR(45) NOT NULL,\
     `updated_on` DATETIME NOT NULL,\
