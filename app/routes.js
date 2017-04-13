@@ -239,7 +239,7 @@ module.exports = function(app, passport) {
             console.log(rows.length);
             if (rows.length !== 0) {
                 for (i in rows) {
-                    res.send('The device already exists' + rows[i].id);
+                    res.json({'message': 'The device already exists', 'id': rows[i].id});
                 }
             } else {
                 connection.beginTransaction(function (err) {
@@ -256,7 +256,7 @@ module.exports = function(app, passport) {
                                 });
                             }
                         });
-                        res.send('Device added ' + device_name);
+                        res.json({'message':'Device added', 'id': rows.insertId});
                     });
                 });
             }

@@ -18,7 +18,31 @@ var flash    = require('connect-flash');
 
 require('./config/passport')(passport); // pass passport for configuration
 
+var options = {
+    host: 'localhost',
+    port: '8080',
+    path: '/device',
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+};
 
+// Set up the request
+var post_req = http.request(options, function(res) {
+    res.setEncoding('utf8');
+
+    var str;
+    //another chunk of data has been received, so append it to `str`
+    res.on('data', function (chunk) {
+        var result  = JSON.parse(chunk);
+        resources.pi.id = result.id;
+    });
+});
+
+// post the data
+post_req.write(querystring.stringify(post_data));
+post_req.end();
 
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
