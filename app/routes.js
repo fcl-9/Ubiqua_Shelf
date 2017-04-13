@@ -115,7 +115,6 @@ module.exports = function(app, passport) {
                     response.on('data', function (chunk) {
                         str += chunk;
                     });
-
                     //the whole response has been recieved, so we just print it out here
                     response.on('end', function () {
                         res.send(str);
@@ -124,155 +123,112 @@ module.exports = function(app, passport) {
                 http.request(options, callback).end();
                 return;
         }
-	});
-
-    app.get('/product_item', function(req,res){
-
     });
 
     app.post('/product_item',function(req,res){
         var product_id = req.body.product_id;
         var device_id = req.body.device_id;
 
-        var expiration_date;        //TODO: No idea were to get -> No Idea ??? Oo
-        var actual_weight;          //TODO: No idea were to get -> Deve vir do Pi
-        var previous_weight = 0;    //TODO: No idea were to get -> Se o produto é novo não havia stock antes
-
+        var expiration_date = req.body.expiration_date;        //TODO: No idea were to get -> No Idea ??? Oo
+        var actual_weight = req.body.actual_weight;          //TODO: No idea were to get -> Deve vir do Pi
+        var previous_weight = req.body.previous_weight;    //TODO: No idea were to get -> Se o produto é novo não havia stock antes
+        //console.log( + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on );
         var updated_on = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
-        connection.query("SELECT * FROM `product_item` WHERE `product_id`='"+ product_id +"', and  `device_id`= '"+ device_id +"'",function(err0, rows0, fields0){
-            if (err) throw err;
+        connection.query("SELECT * FROM `product_item` WHERE `product_id`='"+ product_id +"' and  `device_id`= '"+ device_id +"'",function(err0, rows0, fields0){
+            if (err0) throw err0;
             if(rows0.length === 0){
                 connection.beginTransaction(function (err) {
-                    connection.query("INSERT INTO `product_item`(`id`, `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
+                    console.log("INSERT INTO `product_item`( `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
+                        "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on + "')");
+
+                    connection.query("INSERT INTO `product_item`( `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
                         "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on + "')", function (err1, rows1, filter1) {
-                        if (err) {
+                        if (err1) {
                             connection.rollback(function () {
-                                throw err;
+                                throw err1;
                             });
                             res.json({'state':'error', 'message': err});
                         }
-                        connection.commit(function (err) {
-                            if (err) {
+                        connection.commit(function (err1) {
+                            if (err1) {
                                 connection.rollback(function () {
-                                    throw err;
+                                    throw err1;
                                 });
                             }
-                            res.json({'state':'success'});
+                            res.send({'state':'success'});
                         });
                     });
                 });
             }else{
-                res.json({'state':'error','message':'already exists'});
+                res.send({'state':'error','message':'already exists'});
             }
         });
     });
 
+    // localhost:8080/product/1/weight?device_id=1
     app.get('/product/:product_id/weight', function(req,res){
         var product_id = req.params.product_id;
-        var device_id = req.body.device_id;
+        var device_id = req.query.device_id;
         var current_weight = -1;
+        console.log("SELECT  `actual_weight`, `previous_weight` FROM `product_item` WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'");
 	    connection.query("SELECT  `actual_weight`, `previous_weight` FROM `product_item` WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function (err,row,field) {
+            if (err) throw err;
             for(var i in row){
+                console.log(row[i].actual_weight);
                 current_weight = row[i].actual_weight;
             }
 
-            req.json({'success':'success', 'data':current_weight });
+            res.json({'success':'success', 'data':current_weight });
         });
     });
 
     app.post('/product/:product_id/weight', function(req,res){
         var product_id = req.params.product_id;
         var device_id = req.body.device_id;
-        var current_weight = -1;
+        var current_weight = req.body.actual_weight;
         var previous_weight = -1;
         connection.query("SELECT  `actual_weight`, `previous_weight` FROM `product_item` WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function (err,row,field) {
+            if (err) throw err;
             for(var i in row){
                 previous_weight = row[i].actual_weight;
             }
             connection.query("UPDATE `product_item` SET `actual_weight`='"+ current_weight +"',`previous_weight`='"+ previous_weight +"'" +
                 "WHERE `product_id`='"+product_id+"' and `device_id`='"+device_id+"'",function(err,row,field){
-
-                req.json({'success':'success'});
+                if (err) throw err;
+                res.json({'success':'success'});
             });
         });
     });
 
-    /*app.get('/product/:product_id/stock', function(req,res){
-        connection.query("SELECT state FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
-            if (err) throw err;
-            console.log(rows.length);
-            if(rows.length === 0){
-
-                res.send({'state':'error'});
-            }
-            for (var i in rows) {
-                res.send({'state':rows[i].state });
-            }
-        });
-    });
-
-    app.get('/product/:product_id/expiration_date',function(req,res){
-        connection.query("SELECT expiration_date FROM `device_has_product_stock` where product_stock_id=" + req.params.product_id, function(err, rows, fields) {
-            if (err) throw err;
-            console.log(rows.length);
-            if(rows.length === 0){
-
-                res.send({'expiration_date':'error'});
-            }
-            for (var i in rows) {
-                res.send({'expiration_date':rows[i].expiration_date });
-            }
-        });
-    });
-
-    app.get('/shopping_list', function(req,res){
-        var sql = "SELECT product_stock.product_name, device_has_product_stock.stock FROM device_has_product_stock " +
-            "JOIN product_stock ON product_stock.id = device_has_product_stock.product_stock_id WHERE state='TOBUY'";
+    app.get('/product', function (req, res) {
+        var sql = "SELECT name, (SELECT count(*) FROM product_item WHERE product_item.product_id = product.id) AS quantity " +
+            "FROM product WHERE state='TOBUY'";
         connection.query(sql, function (err, rows, fields) {
             res.send({'shopping_list': JSON.stringify(rows)});
         });
     });
 
-    app.post('/shopping_list', function (req, res) {
-        var product_name = req.body.product_name;
-        console.log(product_name);
-        var sql = "SELECT id FROM product_stock WHERE product_stock.product_name ='" + product_name + "'";
+    app.post('/product/:product_id/state', function (req, res) {
+        var product_id = req.params.product_id;
+        var state = req.body.state;
+        console.log("STATE " + state);
+        var sql = "SELECT * FROM product WHERE product.id ='" + product_id + "'";
+        console.log(sql);
         connection.query(sql, function (err, rows, fields) {
             if (err) throw err;
             if (rows.length === 0) {
-                res.send('unable to add product to shopping list (invalid product name)');
+                res.send('unable to add product (invalid product id)');
             } else {
-                for (var i in rows) {
-                    var query = "UPDATE device_has_product_stock SET state = 'TOBUY' WHERE  product_stock_id ='" + rows[i].id + "'";
-                    console.log(query);
-                    connection.query(query, function (err, lines, fields) {
-                        res.send("updated");
-                    });
-                }
+                var query = "UPDATE product SET state = '" + state +
+                    "' WHERE  product.id ='" + product_id + "'";
+                console.log(query);
+                connection.query(query, function (err, lines, fields) {
+                    res.send("updated");
+                });
             }
         });
     });
 
-    app.delete('/shopping_list', function (req, res) {
-        var product_name = req.body.product_name;
-        console.log(product_name);
-        var sql = "SELECT id FROM product_stock WHERE product_stock.product_name ='" + product_name + "'";
-        connection.query(sql, function (err, rows, fields) {
-            if (err) throw err;
-            if (rows.length === 0) {
-                res.send('unable to add product to shopping list (invalid product name)');
-            } else {
-                for (var i in rows) {
-                    var query = "UPDATE device_has_product_stock SET state = 'DISABLE' WHERE  product_stock_id ='" + rows[i].id + "'";
-                    console.log(query);
-                    connection.query(query, function (err, lines, fields) {
-                        res.send("updated");
-                    });
-                }
-            }
-        });
-    });
-*/
     app.post('/device',function(req,res) {
         var device_name = req.body.device_name;
         console.log(Date.now());
