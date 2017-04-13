@@ -17,7 +17,7 @@ var flash    = require('connect-flash');
 // connect to our database
 
 require('./config/passport')(passport); // pass passport for configuration
-
+/*
 var options = {
     host: 'localhost',
     port: '8080',
@@ -43,7 +43,7 @@ var post_req = http.request(options, function(res) {
 // post the data
 post_req.write(querystring.stringify(post_data));
 post_req.end();
-
+*/
 // set up our express application
 app.use(morgan('dev')); // log every request to the console
 app.use(cookieParser()); // read cookies (needed for auth)
