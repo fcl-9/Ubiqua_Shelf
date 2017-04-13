@@ -172,13 +172,15 @@ module.exports = function(app, passport) {
         console.log("STATE " + state);
         var sql = "SELECT * FROM product_item WHERE product_item.id ='" + product_item_id + "'";
         console.log(sql);
+        var updated_on = (new Date((new Date((new Date(new Date())).toISOString())).getTime()
+            - ((new Date()).getTimezoneOffset() * 60000))).toISOString().slice(0, 19).replace('T', ' ');
         connection.query(sql, function (err, rows, fields) {
             if (err) throw err;
             if (rows.length === 0) {
                 res.send('unable to add product (invalid product id)');
             } else {
                 var query = "UPDATE product_item SET state = '" + state +
-                    "' WHERE  product_item.id ='" + product_item_id + "'";
+                    "', updated_on = '" + updated_on + "' WHERE  product_item.id ='" + product_item_id + "'";
                 console.log(query);
                 connection.query(query, function (err, lines, fields) {
                     res.send("updated");
@@ -237,13 +239,15 @@ module.exports = function(app, passport) {
         console.log("STATE " + state);
         var sql = "SELECT * FROM product WHERE product.id ='" + product_id + "'";
         console.log(sql);
+        var updated_on = (new Date((new Date((new Date(new Date())).toISOString())).getTime()
+            - ((new Date()).getTimezoneOffset() * 60000))).toISOString().slice(0, 19).replace('T', ' ');
         connection.query(sql, function (err, rows, fields) {
             if (err) throw err;
             if (rows.length === 0) {
                 res.send('unable to add product (invalid product id)');
             } else {
                 var query = "UPDATE product SET state = '" + state +
-                    "' WHERE  product.id ='" + product_id + "'";
+                    "', updated_on = '" + updated_on + "' WHERE  product.id ='" + product_id + "'";
                 console.log(query);
                 connection.query(query, function (err, lines, fields) {
                     res.send("updated");
