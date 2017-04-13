@@ -3,6 +3,7 @@ var mysql = require('mysql');
 var bcrypt = require('bcrypt-nodejs');
 var dbconfig = require('../config/database.js');
 var connection = mysql.createConnection(dbconfig.connection);
+var http = require('http');
 connection.query('USE ' + dbconfig.database);
 
 module.exports = function(app, passport) {
@@ -94,11 +95,35 @@ module.exports = function(app, passport) {
 		});
 	});
 
-	app.get('/sensor',isLoggedIn, function(req,res){
-		res.render('sensor.ejs',{
-			user: req.user
-		});
-	});
+	app.get('/sensor', isLoggedIn, function(req,res){
+        switch (req.accepts(['json', 'html'])) { //#D
+            case 'html':
+                res.render('sensor.ejs', {
+                    user: req.user
+                });
+                return;
+            default:
+                var options = {
+                    host: 'localhost',
+                    port: '8484',
+                    path: '/pi/sensors'
+                };
+                callback = function(response) {
+                    var str = '';
+
+                    //another chunk of data has been recieved, so append it to `str`
+                    response.on('data', function (chunk) {
+                        str += chunk;
+                    });
+                    //the whole response has been recieved, so we just print it out here
+                    response.on('end', function () {
+                        res.send(str);
+                    });
+                }
+                http.request(options, callback).end();
+                return;
+        }
+    });
 
     app.post('/product_item',function(req,res){
         var product_id = req.body.product_id;
