@@ -32,6 +32,11 @@
 <body>
 <% include ../partials/nav-bar.ejs %>
 <div class="container">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1>Shelf Sensors</h1>
+        </div>
+    </div>
 <div class="row">
     <div class="col-md-4 text-center">
         Luminosity<br>
@@ -60,17 +65,8 @@
         // draws it.
         var maxDataPoints = 10;
 
-        var options = {
-            curveType: 'function',
-            animation: {
-                duration: 1000,
-                easing: 'in'
-            },
-            legend: {position: 'bottom'}
-        };
-
         function drawCharts() {
-            drawLocation();
+            drawLuminosity();
             drawWeight();
             drawBeacons();
         }
@@ -78,48 +74,93 @@
         function drawBeacons() {
             var chart = new google.visualization.LineChart($('#beacons')[0]);
 
+            var options = {
+                hAxis: {
+                    title: 'Time'
+                },
+                vAxis: {
+                    title: 'Number'
+                },
+                curveType: 'function',
+                animation: {
+                    duration: 500,
+                    easing: 'linear'
+                },
+                legend: {position: 'none'}
+            };
+
             var data = google.visualization.arrayToDataTable([
                 ['Time', 'Number'],
                 [getTime(), 0]
             ]);
             $.get('http://shelf.local:8484/pi/sensors/beacons',function(result) {
                 if(typeof result.value !== "string") {
-                    addDataPoint(result.value.length, chart, data);
+                    addDataPoint(result.value.length, chart, data, options);
                 }
                 else {
                     $("#beacons").text(result.value);
                 }
             })
-            beaconSocketHandlers('ws://shelf.local:8484/pi/sensors/beacons', chart, data);
+            beaconSocketHandlers('ws://shelf.local:8484/pi/sensors/beacons', chart, data, options);
         }
 
         function drawWeight() {
             var chart = new google.visualization.LineChart($('#weight')[0]);
+
+            var options = {
+                hAxis: {
+                    title: 'Time'
+                },
+                vAxis: {
+                    title: 'Weight'
+                },
+                curveType: 'function',
+                animation: {
+                    duration: 500,
+                    easing: 'linear'
+                },
+                legend: {position: 'none'}
+            };
 
             var data = google.visualization.arrayToDataTable([
                 ['Time', 'Weight'],
                 [getTime(), 0]
             ]);
 
-            socketHandlers('ws://shelf.local:8484/pi/sensors/weight', chart, data, "#weight");
+            socketHandlers('ws://shelf.local:8484/pi/sensors/weight', chart, data, options,"#weight");
         }
 
-        function drawLocation() {
+        function drawLuminosity() {
             var chart = new google.visualization.LineChart($('#luminosity')[0]);
+
+            var options = {
+                hAxis: {
+                    title: 'Time'
+                },
+                vAxis: {
+                    title: 'Luminosity'
+                },
+                curveType: 'function',
+                animation: {
+                    duration: 500,
+                    easing: 'linear'
+                },
+                legend: {position: 'none'}
+            };
 
             var data = google.visualization.arrayToDataTable([
                 ['Time', 'Luminosity'],
                 [getTime(), 0]
             ]);
 
-            socketHandlers('ws://shelf.local:8484/pi/sensors/luminosity', chart, data, "#luminosity");
+            socketHandlers('ws://shelf.local:8484/pi/sensors/luminosity', chart, data, options, "#luminosity");
         }
 
-        function beaconSocketHandlers(url, chart, data) {
+        function beaconSocketHandlers(url, chart, data, options) {
             var socket = new WebSocket(url); //#A
             socket.onmessage = function (event) { //#B
                 var result = JSON.parse(event.data).value.length;
-                addDataPoint(result, chart, data);
+                addDataPoint(result, chart, data, options);
             };
 
             socket.onerror = function (error) { //#C
@@ -129,11 +170,11 @@
             };
         }
 
-        function socketHandlers(url, chart, data, id) {
+        function socketHandlers(url, chart, data, options, id) {
             var socket = new WebSocket(url); //#A
             socket.onmessage = function (event) { //#B
                 var result = JSON.parse(event.data).value;
-                addDataPoint(result, chart, data);
+                addDataPoint(result, chart, data, options);
             };
 
             socket.onerror = function (error) { //#C
@@ -143,7 +184,7 @@
             };
         }
 
-        function addDataPoint(dataPoint, chart, data) {
+        function addDataPoint(dataPoint, chart, data, options) {
             if (data.getNumberOfRows() > maxDataPoints) {
                 data.removeRow(0);
             }
