@@ -119,7 +119,7 @@ module.exports = function(app, passport) {
                     response.on('end', function () {
                         res.send(str);
                     });
-                }
+                };
                 http.request(options, callback).end();
                 return;
         }
@@ -165,6 +165,28 @@ module.exports = function(app, passport) {
         });
     });
 
+    app.post('/product_item/:product_item_id/state', function (req, res) {
+        var product_item_id = req.params.product_item_id;
+        var state = req.body.state;
+        console.log("STATE " + state);
+        console.log("STATE " + state);
+        var sql = "SELECT * FROM product_item WHERE product_item.id ='" + product_item_id + "'";
+        console.log(sql);
+        connection.query(sql, function (err, rows, fields) {
+            if (err) throw err;
+            if (rows.length === 0) {
+                res.send('unable to add product (invalid product id)');
+            } else {
+                var query = "UPDATE product_item SET state = '" + state +
+                    "' WHERE  product_item.id ='" + product_item_id + "'";
+                console.log(query);
+                connection.query(query, function (err, lines, fields) {
+                    res.send("updated");
+                });
+            }
+        });
+    });
+
     // localhost:8080/product/1/weight?device_id=1
     app.get('/product/:product_id/weight', function(req,res){
         var product_id = req.params.product_id;
@@ -201,8 +223,9 @@ module.exports = function(app, passport) {
     });
 
     app.get('/product', function (req, res) {
-        var sql = "SELECT name, (SELECT count(*) FROM product_item WHERE product_item.product_id = product.id) AS quantity " +
+        var sql = "SELECT name, (SELECT count(*) FROM product_item WHERE product_item.lot_product_id = product.id) AS quantity " +
             "FROM product WHERE state='TOBUY'";
+        console.log(sql);
         connection.query(sql, function (err, rows, fields) {
             res.send({'shopping_list': JSON.stringify(rows)});
         });
