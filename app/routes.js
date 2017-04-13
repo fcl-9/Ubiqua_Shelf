@@ -125,24 +125,89 @@ module.exports = function(app, passport) {
         }
     });
 
-    app.post('/product_item',function(req,res){
-        var product_id = req.body.product_id;
+    app.post('/api/sensor/data',function(req,res){
         var device_id = req.body.device_id;
+        var beacon_uid = JSON.parse(req.body.beacons); //Array of JSONS
+        var total_weight = req.body.wight;
+        var new_products = [];
+        var missing_product = [];
+        var existing_product_out = [];
+        connection.query("SELECT id, state  FROM `product_item`",function(err,existing_products,fields){
+            for(var i in beacon_uid) {
+                for (var j in existing_products) {
+                    if(beacon_uid[i].uuid !== existing_products[j].id){
+                        new_products.push(beacon_uid[i]);
+                    }else{
+                        //A detected id was removed in a previous time
+                        if(existing_products[j].state === "OUT"){
+                            existing_product_out.push(existing_products[j].id);
+                        }
+                    }
+                    for(k in beacon_uid){
+                        if(existing_products[j].id !== beacon_uid[k].uuid){
+                            missing_product.push(existing_products[j].id)
+                        }
+                    }
+                }
+            }
 
-        var expiration_date = req.body.expiration_date;        //TODO: No idea were to get -> No Idea ??? Oo
-        var actual_weight = req.body.actual_weight;          //TODO: No idea were to get -> Deve vir do Pi
-        var previous_weight = req.body.previous_weight;    //TODO: No idea were to get -> Se o produto é novo não havia stock antes
-        //console.log( + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on );
-        var updated_on = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
+            connection.query("SELECT SUM(actual_weight) FROM `product_item`",function(err,shelfWeight){
+                //Weight only changes when something is remove or add to the shelf.
+                if(missing_product.length > 0 ) {
+                    var missing_item_weight = shelfWeight - total_weight;
+                    var missing_item_state = "OUT";
+
+                    for (var i in missing_product) {
+                        connection.query("SELECT `actual_weight` FROM `product_item` WHERE id='"+missing_product[i]+"'", function (error,previous_weight) {
+                            var updated_on = (new Date((new Date((new Date(new Date())).toISOString())).getTime() - ((new Date()).getTimezoneOffset() * 60000))).toISOString().slice(0, 19).replace('T', ' ');
+
+                            var queryString = "UPDATE `product_item` SET `actual_weight`='" + missing_item_weight + "',`previous_weight`='" + previous_weight + "',`updated_on`='" + updated_on + "'," +
+                                "`state`='" + missing_item_state + "',`device_id`='" + device_id + "' WHERE id='" + missing_product[i] + "'";
+                            console.log(queryString);//TODO: CHANGE THIS TO RES.JSON
+                        });
+                    }
+                }
+
+                if(new_products.length > 0){
+                    var new_item_weight = total_weight - shelfWeight;
+                    var new_item_state = "IN";
+
+                    for(var i in new_products) {
+                        connection.query("SELECT `actual_weight` FROM `product_item` WHERE id='"+new_products[i].uuid+"'", function (error,previous_weight) {
+                            var updated_on = (new Date((new Date((new Date(new Date())).toISOString())).getTime() - ((new Date()).getTimezoneOffset() * 60000))).toISOString().slice(0, 19).replace('T', ' ');
+                            var queryString = "INSERT INTO `product_item`(`id`, `actual_weight`, `previous_weight`, `updated_on`, `state`, `distance`, `device_id`, `lot_id`, `lot_product_id`) " +
+                                "VALUES ('" + new_products[i].uuid + "','" + new_item_weight + "','" + previous_weight + "','" + updated_on + "','" + new_item_state + "','" + new_products[i].distance + "','" + device_id + "','" + new_products[i].minor + "','" + new_products[i].major + "')";
+                            console.log(queryString);//TODO: CHANGE THIS TO RES.JSON
+                        });
+                    }
+                }
+
+                if(existing_product_out.length > 0){
+                    var existing_item_weight = total_weight - shelfWeight;
+                    var existing_item_state = "IN";
+
+                    for(var i in existing_product_out) {
+                        connection.query("SELECT `actual_weight` FROM `product_item` WHERE id='"+existing_product_out[i]+"'", function (error,previous_weight) {
+                            var updated_on = (new Date((new Date((new Date(new Date())).toISOString())).getTime() - ((new Date()).getTimezoneOffset() * 60000))).toISOString().slice(0, 19).replace('T', ' ');
+                            var queryString = "UPDATE `product_item` SET `actual_weight`='" + existing_item_weight + "',`previous_weight`='" + previous_weight + "',`updated_on`='" + updated_on + "'," +
+                                "`state`='" + existing_item_state + "',`device_id`='" + device_id + "' WHERE id='" + existing_product_out[i] + "'";
+                            console.log(queryString);//TODO: CHANGE THIS TO RES.JSON
+                        });
+                    }
+                }
+            });
+        });
+
+
+
+
         connection.query("SELECT * FROM `product_item` WHERE `product_id`='"+ product_id +"' and  `device_id`= '"+ device_id +"'",function(err0, rows0, fields0){
             if (err0) throw err0;
             if(rows0.length === 0){
+                var previous_weight = 0;
                 connection.beginTransaction(function (err) {
-                    console.log("INSERT INTO `product_item`( `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
-                        "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on + "')");
-
-                    connection.query("INSERT INTO `product_item`( `product_id`, `device_id`, `actual_weight`, `expiration_date`, `previous_weight`, `updated_on`) " +
-                        "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + expiration_date + "','" + previous_weight + "','" + updated_on + "')", function (err1, rows1, filter1) {
+                    connection.query("INSERT INTO `product_item`( `product_id`, `device_id`, `actual_weight`,  `previous_weight`, `updated_on`) " +
+                        "VALUES ('" + product_id + "','" + device_id + "','" + actual_weight + "','" + previous_weight + "','" + updated_on + "')", function (err1, rows1, filter1) {
                         if (err1) {
                             connection.rollback(function () {
                                 throw err1;
@@ -162,6 +227,17 @@ module.exports = function(app, passport) {
             }else{
                 res.send({'state':'error','message':'already exists'});
             }
+        });
+    });
+
+    app.put('/product_item',function(req,res){
+        var product_id = req.body.product_id;
+        var device_id = req.body.device_id;
+        var actual_weight = req.body.actual_weight;
+        var updated_on = (new Date ((new Date((new Date(new Date())).toISOString() )).getTime() - ((new Date()).getTimezoneOffset()*60000))).toISOString().slice(0, 19).replace('T', ' ');
+        connection.query("SELECT actual_weight FROM `product_item` WHERE `product_id`='"+ product_id +"' and  `device_id`= '"+ device_id +"'",function(err0, rows0, fields0){
+            if (err0) throw err0;
+
         });
     });
 
